@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import { words } from "./words";
 
 export default function Home() {
   const ALLOWED_GUESSES = 5;
@@ -9,11 +8,12 @@ export default function Home() {
 
   const [secretWord, setSecretWord] = useState<string>('');
 
-  function chooseSecretWord() {
-    const index = Math.floor(Math.random() * words.length);
-    setSecretWord(words[index]);
+  async function chooseSecretWord() {
+    const response = await fetch('/api/random-word');
+    const word = await response.text();
+    setSecretWord(word);
   }
-  useEffect(() => chooseSecretWord(), []);
+  useEffect(() => {chooseSecretWord()}, []);
 
   const [remainingGuesses, setRemainingGuesses] = useState<number>(ALLOWED_GUESSES);
   useEffect(() => {
