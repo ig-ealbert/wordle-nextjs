@@ -1,101 +1,140 @@
-import Image from "next/image";
+'use client'
+
+import { useEffect, useState } from "react";
+import { words } from "./words";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const ALLOWED_GUESSES = 5;
+  const WORD_LENGTH = 5;
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  const [secretWord, setSecretWord] = useState<string>('');
+
+  function chooseSecretWord() {
+    const index = Math.floor(Math.random() * words.length);
+    setSecretWord(words[index]);
+  }
+  useEffect(() => chooseSecretWord(), []);
+
+  const [remainingGuesses, setRemainingGuesses] = useState<number>(ALLOWED_GUESSES);
+  useEffect(() => {
+    setRemainingGuesses(ALLOWED_GUESSES);
+  }, [secretWord]);
+  useEffect(() => {
+    checkForWin()
+  }, [remainingGuesses]);
+
+  const [feedback, setFeedback] = useState<string>('');
+  useEffect(() => {
+    setFeedback('');
+  }, [secretWord]);
+
+  const [userGuess, setUserGuess] = useState<string>('');
+  useEffect(() => {
+    setUserGuess('');
+  }, [secretWord]);
+
+  const [guessHistory, setGuessHistory] = useState<string[]>([]);
+  useEffect(() => setGuessHistory([]), [secretWord]);
+
+  const [yellowIndices, setYellowIndices] = useState<number[][]>([]);
+  useEffect(() => setYellowIndices([]), [secretWord]);
+
+  function validateGuess(guess: string) {
+    if (guess.length > WORD_LENGTH) {
+      return guess.substring(0, WORD_LENGTH);
+    }
+    if (guess.length < WORD_LENGTH) {
+      return `${guess}${"x".repeat(WORD_LENGTH - guess.length)}`;
+    }
+    return guess;
+  }
+
+  function handleGuess() {
+    const guess = validateGuess(userGuess);
+    setGuessHistory(guessHistory.concat(guess));
+    scoreLetters(guess);
+    setRemainingGuesses(remainingGuesses - 1);
+  }
+
+  function scoreLetters(guess: string) {
+    const greens = findGreens(guess);
+    findYellows(guess, greens);
+  }
+
+  function findGreens(guess: string) {
+    const letters = guess.split('');
+    return letters.filter((letter, index) => letter === secretWord[index]);
+  }
+
+  function findYellows(guess: string, greens: string[]) {
+    const letters = guess.split('');
+    const yellows: string[] = [];
+    const currentYellows: number[] = [];
+    letters.forEach((letter, index) => {
+      const allInstances = getLetterCountInArray(letter, secretWord.split(''));
+      const greenInstances = getLetterCountInArray(letter, greens);
+      const yellowInstances = getLetterCountInArray(letter, yellows);
+      if (letter !== secretWord[index] &&
+          secretWord.includes(letter) &&
+          allInstances > greenInstances + yellowInstances) {
+            yellows.push(letter);
+            currentYellows.push(index);
+          }
+      }
+    );
+    const newYellowIndices = yellowIndices.slice();
+    newYellowIndices.push(currentYellows);
+    setYellowIndices(newYellowIndices);
+  }
+
+  function getLetterStyle(guess: string, letterIndex: number, attempt: number) {
+    if (guess[letterIndex] === secretWord[letterIndex]) {
+      return "green";
+    }
+    if (yellowIndices[attempt].includes(letterIndex)) {
+      return "yellow";
+    }
+    return "";
+  }
+  
+  function getLetterCountInArray(letter: string, array: string[]) {
+    const matches = array.filter((arrayLetter) => arrayLetter === letter);
+    return matches.length;
+  }
+  
+  function checkForWin() {
+    if (userGuess === secretWord) {
+      setFeedback(`You guessed the word in ${ALLOWED_GUESSES - remainingGuesses} guesses!`);
+    }
+    else if (remainingGuesses === 0) {
+      setFeedback(`The word was ${secretWord}.  Reset the game and try again!`);
+    }
+  }
+
+  return (
+    <div>
+      <div>
+        <input id="currentGuess" value={userGuess}
+               onChange={(e) => {setUserGuess(e.target.value)}}></input>
+        <button disabled={remainingGuesses <= 0} onClick={handleGuess}>Guess</button>
+      </div>
+      <div id="guessHistory">
+        {guessHistory.map((guess, index) => {
+          return (
+            <div key={guess}>
+              <span className={getLetterStyle(guess, 0, index)}>{guess[0]}</span>
+              <span className={getLetterStyle(guess, 1, index)}>{guess[1]}</span>
+              <span className={getLetterStyle(guess, 2, index)}>{guess[2]}</span>
+              <span className={getLetterStyle(guess, 3, index)}>{guess[3]}</span>
+              <span className={getLetterStyle(guess, 4, index)}>{guess[4]}</span>
+            </div>
+          )
+        })}
+      </div>
+      <div>
+        <p id="feedback">{feedback}</p>
+        <button onClick={chooseSecretWord}>Reset</button>
+      </div>
     </div>
   );
 }
