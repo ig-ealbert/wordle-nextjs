@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from "react";
+import { findGreens, findYellows, validateGuess } from "./helpers";
 
 export default function Home() {
   const ALLOWED_GUESSES = 5;
-  const WORD_LENGTH = 5;
 
   const [secretWord, setSecretWord] = useState<string>('');
 
@@ -39,16 +39,6 @@ export default function Home() {
   const [yellowIndices, setYellowIndices] = useState<number[][]>([]);
   useEffect(() => setYellowIndices([]), [secretWord]);
 
-  function validateGuess(guess: string) {
-    if (guess.length > WORD_LENGTH) {
-      return guess.substring(0, WORD_LENGTH);
-    }
-    if (guess.length < WORD_LENGTH) {
-      return `${guess}${"x".repeat(WORD_LENGTH - guess.length)}`;
-    }
-    return guess;
-  }
-
   function handleGuess() {
     const guess = validateGuess(userGuess);
     setGuessHistory(guessHistory.concat(guess));
@@ -57,33 +47,10 @@ export default function Home() {
   }
 
   function scoreLetters(guess: string) {
-    const greens = findGreens(guess);
-    findYellows(guess, greens);
-  }
-
-  function findGreens(guess: string) {
-    const letters = guess.split('');
-    return letters.filter((letter, index) => letter === secretWord[index]);
-  }
-
-  function findYellows(guess: string, greens: string[]) {
-    const letters = guess.split('');
-    const yellows: string[] = [];
-    const currentYellows: number[] = [];
-    letters.forEach((letter, index) => {
-      const allInstances = getLetterCountInArray(letter, secretWord.split(''));
-      const greenInstances = getLetterCountInArray(letter, greens);
-      const yellowInstances = getLetterCountInArray(letter, yellows);
-      if (letter !== secretWord[index] &&
-          secretWord.includes(letter) &&
-          allInstances > greenInstances + yellowInstances) {
-            yellows.push(letter);
-            currentYellows.push(index);
-          }
-      }
-    );
+    const greens = findGreens(guess, secretWord);
+    const yellows = findYellows(guess, secretWord, greens);
     const newYellowIndices = yellowIndices.slice();
-    newYellowIndices.push(currentYellows);
+    newYellowIndices.push(yellows);
     setYellowIndices(newYellowIndices);
   }
 
@@ -95,11 +62,6 @@ export default function Home() {
       return "yellow";
     }
     return "";
-  }
-  
-  function getLetterCountInArray(letter: string, array: string[]) {
-    const matches = array.filter((arrayLetter) => arrayLetter === letter);
-    return matches.length;
   }
   
   function checkForWin() {
