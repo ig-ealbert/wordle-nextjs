@@ -1,6 +1,0 @@
-{
-  "extension": ["ts"],
-  "loader": "ts-node/esm",
-  "timeout": 2000,
-  "spec": "src/**/*.test.ts"
-}
