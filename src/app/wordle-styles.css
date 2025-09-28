@@ -9,3 +9,15 @@
 .yellow {
   background-color: yellow;
 }
+
+#currentGuess {
+  margin-right: 5px;
+}
+
+#guessButton {
+  background-color: green;
+}
+
+#guessButton:disabled {
+  background-color: lightgray;
+}
