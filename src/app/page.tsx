@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { ALLOWED_GUESSES, WORD_LENGTH } from "./constants";
-import { findGreens, findYellows } from "./helpers";
+import {
+  findGreens,
+  findYellows,
+  getEndGameMessage,
+  getLetterStyle,
+} from "./helpers";
 
 export default function Home() {
   const [secretWord, setSecretWord] = useState<string>("");
@@ -53,24 +58,24 @@ export default function Home() {
     setYellowIndices(newYellowIndices);
   }
 
-  function getLetterStyle(guess: string, letterIndex: number, attempt: number) {
-    if (guess[letterIndex] === secretWord[letterIndex]) {
-      return "green";
-    }
-    if (yellowIndices[attempt].includes(letterIndex)) {
-      return "yellow";
-    }
-    return "";
+  function letterStyle(guess: string, letterIndex: number, attempt: number) {
+    const info = {
+      guess,
+      letterIndex,
+      attempt,
+      secretWord,
+      yellowIndices,
+    };
+    return getLetterStyle(info);
   }
 
   function checkForWin() {
-    if (userGuess === secretWord) {
-      setFeedback(
-        `You guessed the word in ${ALLOWED_GUESSES - remainingGuesses} guesses!`
-      );
-    } else if (remainingGuesses === 0) {
-      setFeedback(`The word was ${secretWord}.  Reset the game and try again!`);
-    }
+    const info = {
+      userGuess,
+      secretWord,
+      remainingGuesses,
+    };
+    setFeedback(getEndGameMessage(info));
   }
 
   return (
@@ -96,21 +101,11 @@ export default function Home() {
         {guessHistory.map((guess, index) => {
           return (
             <div key={guess}>
-              <span className={getLetterStyle(guess, 0, index)}>
-                {guess[0]}
-              </span>
-              <span className={getLetterStyle(guess, 1, index)}>
-                {guess[1]}
-              </span>
-              <span className={getLetterStyle(guess, 2, index)}>
-                {guess[2]}
-              </span>
-              <span className={getLetterStyle(guess, 3, index)}>
-                {guess[3]}
-              </span>
-              <span className={getLetterStyle(guess, 4, index)}>
-                {guess[4]}
-              </span>
+              <span className={letterStyle(guess, 0, index)}>{guess[0]}</span>
+              <span className={letterStyle(guess, 1, index)}>{guess[1]}</span>
+              <span className={letterStyle(guess, 2, index)}>{guess[2]}</span>
+              <span className={letterStyle(guess, 3, index)}>{guess[3]}</span>
+              <span className={letterStyle(guess, 4, index)}>{guess[4]}</span>
             </div>
           );
         })}
