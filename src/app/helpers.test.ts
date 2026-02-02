@@ -61,7 +61,7 @@ describe("Helper functions for wordle in next.js", () => {
     const info = {
       userGuess: "abcde",
       secretWord: "abcde",
-      remainingGuesses: 2,
+      remainingGuesses: 3,
     };
     const message = getEndGameMessage(info);
     const expected = `You guessed the word in 3 guesses!`;

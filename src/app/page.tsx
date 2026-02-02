@@ -7,7 +7,6 @@ import {
   findYellows,
   getEndGameMessage,
   getLetterStyle,
-  isInDictionary,
 } from "./helpers";
 
 export default function Home() {
@@ -40,7 +39,8 @@ export default function Home() {
   useEffect(() => setYellowIndices([]), [secretWord]);
 
   async function handleGuess() {
-    const isValid = await isInDictionary(userGuess);
+    const response = await fetch(`/api/exists-in-dictionary?word=${userGuess}`);
+    const isValid = (await response.json()).exists;
     if (isValid) {
       setFeedback("");
       setGuessHistory(guessHistory.concat(userGuess));

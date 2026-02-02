@@ -54,8 +54,3 @@ export function getLetterStyle(info: letterStyleInfo) {
   }
   return "";
 }
-
-export async function isInDictionary(word: string) {
-  const response = await fetch(`/api/exists-in-dictionary?word=${word}`);
-  return (await response.json()).exists;
-}
