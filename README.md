@@ -30,3 +30,5 @@ Having used Wordle for teaching, I found out my rules were wrong. :sweat_smile: 
 2. You can guess words that aren't in the dictionary.
 
 I like that these two alternate rules balance each other out. It's harder with one less guess, but it's easier when you don't have to make a real word.
+
+If you want the more traditional rules, check out the `traditional` branch.
