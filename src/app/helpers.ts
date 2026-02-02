@@ -10,7 +10,7 @@ export function findGreens(guess: string, secretWord: string) {
 export function findYellows(
   guess: string,
   secretWord: string,
-  greens: string[]
+  greens: string[],
 ) {
   const letters = guess.split("");
   const yellows: string[] = [];
@@ -53,4 +53,9 @@ export function getLetterStyle(info: letterStyleInfo) {
     return "yellow";
   }
   return "";
+}
+
+export async function isInDictionary(word: string) {
+  const response = await fetch(`/api/exists-in-dictionary?word=${word}`);
+  return (await response.json()).exists;
 }

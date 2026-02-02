@@ -7,6 +7,7 @@ import {
   findYellows,
   getEndGameMessage,
   getLetterStyle,
+  isInDictionary,
 } from "./helpers";
 
 export default function Home() {
@@ -38,10 +39,16 @@ export default function Home() {
   const [yellowIndices, setYellowIndices] = useState<number[][]>([]);
   useEffect(() => setYellowIndices([]), [secretWord]);
 
-  function handleGuess() {
-    setGuessHistory(guessHistory.concat(userGuess));
-    scoreLetters(userGuess);
-    setRemainingGuesses(remainingGuesses - 1);
+  async function handleGuess() {
+    const isValid = await isInDictionary(userGuess);
+    if (isValid) {
+      setFeedback("");
+      setGuessHistory(guessHistory.concat(userGuess));
+      scoreLetters(userGuess);
+      setRemainingGuesses(remainingGuesses - 1);
+    } else {
+      setFeedback(`${userGuess} is not in the dictionary`);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
