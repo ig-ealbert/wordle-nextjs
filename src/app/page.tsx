@@ -2,46 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { ALLOWED_GUESSES, WORD_LENGTH } from "./constants";
-import {
-  findGreens,
-  findYellows,
-  getEndGameMessage,
-  getLetterStyle,
-} from "./helpers";
 
 export default function Home() {
-  const [secretWord, setSecretWord] = useState<string>("");
-
-  async function chooseSecretWord() {
-    const response = await fetch("/api/random-word");
-    const word = await response.text();
-    setSecretWord(word);
-  }
-  useEffect(() => {
-    chooseSecretWord();
-  }, []);
-
   const [remainingGuesses, setRemainingGuesses] =
     useState<number>(ALLOWED_GUESSES);
-  useEffect(() => setRemainingGuesses(ALLOWED_GUESSES), [secretWord]);
-  useEffect(() => checkForWin(), [remainingGuesses]);
-
   const [feedback, setFeedback] = useState<string>("");
-  useEffect(() => setFeedback(""), [secretWord]);
-
   const [userGuess, setUserGuess] = useState<string>("");
-  useEffect(() => setUserGuess(""), [secretWord]);
-
   const [guessHistory, setGuessHistory] = useState<string[]>([]);
-  useEffect(() => setGuessHistory([]), [secretWord]);
+  const [guessColors, setGuessColors] = useState<string[][]>([]);
 
-  const [yellowIndices, setYellowIndices] = useState<number[][]>([]);
-  useEffect(() => setYellowIndices([]), [secretWord]);
+  async function initialize() {
+    await fetch("/api/random-word");
+    setRemainingGuesses(ALLOWED_GUESSES);
+    setFeedback("");
+    setUserGuess("");
+    setGuessHistory([]);
+    setGuessColors([]);
+  }
+  useEffect(() => {
+    initialize();
+  }, []);
 
-  function handleGuess() {
+  async function handleGuess() {
     setGuessHistory(guessHistory.concat(userGuess));
-    scoreLetters(userGuess);
+    const scoredLetters = await scoreLetters(userGuess);
     setRemainingGuesses(remainingGuesses - 1);
+    checkForWin(scoredLetters, remainingGuesses - 1);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -50,32 +36,33 @@ export default function Home() {
     }
   }
 
-  function scoreLetters(guess: string) {
-    const greens = findGreens(guess, secretWord);
-    const yellows = findYellows(guess, secretWord, greens);
-    const newYellowIndices = yellowIndices.slice();
-    newYellowIndices.push(yellows);
-    setYellowIndices(newYellowIndices);
+  async function scoreLetters(guess: string) {
+    const response = await fetch(`/api/color-guess?guess=${guess}`);
+    const scoredColors: string[] = await response.json();
+    const newScoredColors = guessColors.slice();
+    newScoredColors.push(scoredColors);
+    setGuessColors(newScoredColors);
+    return scoredColors;
   }
 
-  function letterStyle(guess: string, letterIndex: number, attempt: number) {
-    const info = {
-      guess,
-      letterIndex,
-      attempt,
-      secretWord,
-      yellowIndices,
-    };
-    return getLetterStyle(info);
+  async function checkForWin(colors: string[], guessesLeft: number) {
+    const greens = colors.filter((color) => color === "green").length;
+    if (greens === WORD_LENGTH) {
+      setFeedback(
+        `You guessed the word in ${ALLOWED_GUESSES - guessesLeft} guesses!`,
+      );
+    } else if (guessesLeft === 0) {
+      const messageResponse = await fetch("/api/lose");
+      const message = await messageResponse.text();
+      setFeedback(message);
+    }
   }
 
-  function checkForWin() {
-    const info = {
-      userGuess,
-      secretWord,
-      remainingGuesses,
-    };
-    setFeedback(getEndGameMessage(info));
+  function colorHandler(turn: number, index: number) {
+    if (guessColors.length <= turn || guessColors[turn].length < 5) {
+      return "";
+    }
+    return guessColors[turn][index];
   }
 
   return (
@@ -100,19 +87,19 @@ export default function Home() {
       <div id="guessHistory">
         {guessHistory.map((guess, index) => {
           return (
-            <div key={guess}>
-              <span className={letterStyle(guess, 0, index)}>{guess[0]}</span>
-              <span className={letterStyle(guess, 1, index)}>{guess[1]}</span>
-              <span className={letterStyle(guess, 2, index)}>{guess[2]}</span>
-              <span className={letterStyle(guess, 3, index)}>{guess[3]}</span>
-              <span className={letterStyle(guess, 4, index)}>{guess[4]}</span>
+            <div key={`${guess}${index}`}>
+              <span className={colorHandler(index, 0)}>{guess[0]}</span>
+              <span className={colorHandler(index, 1)}>{guess[1]}</span>
+              <span className={colorHandler(index, 2)}>{guess[2]}</span>
+              <span className={colorHandler(index, 3)}>{guess[3]}</span>
+              <span className={colorHandler(index, 4)}>{guess[4]}</span>
             </div>
           );
         })}
       </div>
       <div>
         <p id="feedback">{feedback}</p>
-        <button onClick={chooseSecretWord}>Reset</button>
+        <button onClick={initialize}>Reset</button>
       </div>
     </div>
   );

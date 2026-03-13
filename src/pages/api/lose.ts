@@ -3,8 +3,8 @@ import { wordleInstance } from "@/lib/wordle";
 
 export default function handler(
   req: NextApiRequest,
-  res: NextApiResponse<boolean>,
+  res: NextApiResponse<string>,
 ) {
-  wordleInstance.setRandomWord();
-  res.status(200).send(true);
+  const message = wordleInstance.getLossMessage();
+  res.status(200).send(message);
 }

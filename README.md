@@ -14,10 +14,11 @@ Install the project the first time only.
 npm install
 ```
 
-Run the project.
+Because next.js breaks the ES6 singleton pattern in dev mode, the app must be built and run in production.
 
 ```bash
-npm run dev
+npm run build
+npm start
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
